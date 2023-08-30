@@ -22,6 +22,10 @@ module.exports = {
   env: {
     browser: true,
   },
+  globals: {
+    WeakRef: true,
+    gc: true,
+  },
   rules: {},
   overrides: [
     // node files

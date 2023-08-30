@@ -1,7 +1,16 @@
 {{page-title "MemoryLeak"}}
 
-{{! The following component displays Ember's default welcome message. }}
-<WelcomePage />
-{{! Feel free to remove this! }}
+<button
+  type="button"
+  {{on "click" this.toggle}}
+>
+  toggle
+</button>
+
+{{#if this.show}}
+  <Thing1/>
+  <Thing2/>
+  <Thing3/>
+{{/if}}
 
 {{outlet}}

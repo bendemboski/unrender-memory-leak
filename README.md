@@ -1,57 +1,37 @@
 # memory-leak
 
-This README outlines the details of collaborating on this Ember application.
-A short introduction of this app could easily go here.
+This repo demonstrates a memory leak where components meeting a couple of bizarrely specific conditions will leak after being un-rendered. Those conditions are:
 
-## Prerequisites
+1. The component invokes a local helper function from its template
+2. The component registers a destructor that references `this`
 
-You will need the following things properly installed on your computer.
+## App layout
 
-* [Git](https://git-scm.com/)
-* [Node.js](https://nodejs.org/)
-* [Yarn](https://yarnpkg.com/)
-* [Ember CLI](https://cli.emberjs.com/release/)
-* [Google Chrome](https://google.com/chrome/)
+The app implements three components that are very similar:
 
-## Installation
+* `Thing1` invokes a local helper and registers a destructor that references `this`
+* `Thing2` invokes a local helper and registers a destructor that does _not_ reference `this`
+* `Thing3` does _not_ invoke a local helper, but does register a destructor that references `this`
 
-* `git clone <repository-url>` this repository
-* `cd memory-leak`
-* `yarn install`
+The app can be used to demonstrate that only `Thing1` leaks when un-rendered, i.e. both conditions listed above are necessary to cause the leak, but neither on its own is sufficient.
 
-## Running / Development
+## Test repro
 
-* `ember serve`
-* Visit your app at [http://localhost:4200](http://localhost:4200).
-* Visit your tests at [http://localhost:4200/tests](http://localhost:4200/tests).
+The app contains a single unit test that renders all three components, then un-renders them, then uses some instrumentation involving `WeakRef`s to demonstrate that `Thing1` leaked, but `Thing2` and `Thing3` did not.
 
-### Code Generators
+## Manual repro
 
-Make use of the many generators for code, try `ember help generate` for more details
+To reproduce it manually and rule out any test instrumentation/timing issues as the cause of this, the dummy app is set up with a button that toggles the rendering of `Thing1`, `Thing2`, and `Thing3`. To reproduce the issue:
 
-### Running Tests
+1. `ember serve`
+2. Visit `http://localhost:4200`
+3. Click the `toggle` button twice (once to render the components, then once to un-render them)
+4. Open the devtool and go to the `Memory` tab
+5. Click the garbage collection button, then take a heap snapshot
+6. Type `thing` in to the `Class filter` field
 
-* `ember test`
-* `ember test --server`
+You will see that an instance of `Thing1` is still present, but `Thing2` and `Thing3` are not.
 
-### Linting
+## Additional notes
 
-* `yarn lint`
-* `yarn lint:fix`
-
-### Building
-
-* `ember build` (development)
-* `ember build --environment production` (production)
-
-### Deploying
-
-Specify what it takes to deploy your app.
-
-## Further Reading / Useful Links
-
-* [ember.js](https://emberjs.com/)
-* [ember-cli](https://cli.emberjs.com/release/)
-* Development Browser Extensions
-  * [ember inspector for chrome](https://chrome.google.com/webstore/detail/ember-inspector/bmdblncegkenkacieihfhpjfppoconhi)
-  * [ember inspector for firefox](https://addons.mozilla.org/en-US/firefox/addon/ember-inspector/)
+It is notable that if you run `ember test -s` and then when the test complete you take a heap snapshot (according to steps 4-6 above), `Thing1` will not be present. I believe this indicates that the component is freed up and garbage collected when the Ember app stops running, but is pinned in memory as long as the app is running.

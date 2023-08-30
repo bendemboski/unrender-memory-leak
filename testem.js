@@ -18,6 +18,8 @@ module.exports = {
         '--remote-debugging-port=0',
         '--window-size=1440,900',
       ].filter(Boolean),
+      // expose garbage collection for memory leak testing
+      all: '--js-flags=--expose-gc',
     },
   },
 };
