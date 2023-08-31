@@ -11,9 +11,7 @@ module('Integration | things', function (hooks) {
 
     await render(hbs`
       {{#if this.show}}
-        <Thing1/>
-        <Thing2/>
-        <Thing3/>
+        <Thing/>
       {{/if}}
     `);
     this.set('show', true);
@@ -22,8 +20,6 @@ module('Integration | things', function (hooks) {
 
     window.gc();
 
-    assert.notOk(Boolean(window.thingRefs.thing1.deref()));
-    assert.notOk(Boolean(window.thingRefs.thing2.deref()));
-    assert.notOk(Boolean(window.thingRefs.thing3.deref()));
+    assert.notOk(Boolean(window.localHelperRef.deref()));
   });
 });
